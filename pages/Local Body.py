@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import math
 
 st.title("🏘️ Local Body-Level Insights")
