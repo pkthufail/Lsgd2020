@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib as mt
-plt = mt.pyplot
+
 
 
 st.title("🏳️ Party-Level Analysis")
@@ -64,26 +63,7 @@ perf_df = pd.DataFrame({
 st.dataframe(perf_df, use_container_width=True, hide_index=True)
 
 
-# Data
-labels = ["Won", "Not Won"]
-sizes = [seats_won, seats_contested - seats_won]
-colors = ["#87BB62", "#F89B78"]
 
-# Create doughnut chart
-fig, ax = plt.subplots()
-wedges, texts, autotexts = ax.pie(
-    sizes,
-    labels=labels,
-    colors=colors,
-    startangle=90,
-    wedgeprops=dict(width=0.4),  # makes it a doughnut
-    autopct="%1.1f%%"
-)
-
-# Equal aspect ratio ensures that pie is drawn as a circle
-ax.axis("equal")
-st.write("Strike Rate")
-st.pyplot(fig)
 
 
 # --- Pivot Table: LBType × Rank ---
