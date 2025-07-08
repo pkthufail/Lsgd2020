@@ -1,10 +1,11 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Election Dashboard",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Overall",
+    layout="wide"
 )
 
-st.title("🗳️ Election Analytics Dashboard")
-st.write("Use the sidebar to navigate between **District**, **Local Body**, and **Other** insights.")
+# Show the label "Overall" as if it's the sidebar name
+st.title("📊 Overall Summary Dashboard")
+
+st.markdown("Use the sidebar to explore detailed insights by District, Local Body, and Party.")

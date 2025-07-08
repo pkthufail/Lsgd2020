@@ -219,4 +219,42 @@ iuml_summary = (
 # Display the table
 st.dataframe(iuml_summary, use_container_width=True, hide_index=True)
 
+st.subheader(f"📋 Ward-wise Results – {selected_lb}, {selected_district}")
+
+# Filter to selected district + LB
+df_lb = df[
+    (df["District"] == selected_district) &
+    (df["LBName"] == selected_lb)
+]
+
+# Get winners (Rank 1)
+winners = df_lb[df_lb["Rank"] == 1].copy()
+# Get runners-up (Rank 2)
+trailers = df_lb[df_lb["Rank"] == 2].copy()
+
+# Merge winners and trailers on WardCode
+merged = pd.merge(
+    winners,
+    trailers,
+    on="WardCode",
+    suffixes=("_win", "_trail")
+)
+
+# Construct final table
+final_table = pd.DataFrame({
+    "Sl. Code": merged["WardCode"].astype(str).str[-2:],  # Last 2 digits of LBCode
+    "Ward Name": merged["WardName_win"],
+    "Won": merged["Candidate_win"],
+    "Won Party": merged["Party_win"],
+    "Lead": merged["Lead_win"],
+    "Trail": merged["Party_trail"] + " (" + merged["Candidate_trail"] + ")"
+})
+
+# Convert Sl. Code to int for sorting (removing non-numeric artifacts)
+final_table["Sl. Code"] = final_table["Sl. Code"].astype(int)
+final_table = final_table.sort_values("Sl. Code").reset_index(drop=True)
+
+# Display the table
+st.dataframe(final_table, use_container_width=True, hide_index=True)
+
 
