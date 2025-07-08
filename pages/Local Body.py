@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import math
+import altair as alt
+
 
 st.title("🏘️ Local Body-Level Insights")
 
@@ -54,88 +56,106 @@ st.dataframe(front_summary, use_container_width=True, hide_index=True)
 
 
 # --- Visualize Seats Won by Front ---
-
-import altair as alt
 st.subheader(f"📊 Stacked Bar Chart – Party-wise Wins by Front in {selected_lb}")
 
-# Filter winners from selected Local Body
+# Filter winners from the selected Local Body
 df_winners = df[
     (df["District"] == selected_district) &
     (df["LBName"] == selected_lb) &
     (df["Rank"] == 1)
 ].copy()
 
+# --- Dynamic Color Mapping ---
 
-# 1. Define explicit color mapping for specific parties (highest priority)
-# Add any party here that should *always* have a specific color, regardless of Front logic.
-# This ensures consistency for key parties.
+# 1. Define explicit color mapping for key parties
 party_specific_colors = {
-    'IUML': '#2E8B57',      # Specific Green for IUML
-    'INC': '#1F77B4',       # Deep Blue for INC
-    'CPM': '#D62728',       # Strong Red for CPM
-    'BJP': '#FF7F0E',       # Dark Orange (Saffron) for BJP
+    'IUML': '#2E8B57',      # Sea Green for IUML
+    'INC': '#1F77B4',       # Standard Blue for INC
+    'CPM': '#D62728',       # Standard Red for CPM
+    'BJP': '#FF7F0E',       # Standard Orange for BJP
     'IND': '#7F7F7F'        # Grey for Independent (OTH)
-    # Add more specific party colors here as needed
 }
 
-# 2. Define general color palettes for each Front (for parties not explicitly mapped)
-# These will be used to generate consistent shades for new or less prominent parties within a Front.
+# 2. Define color palettes for each Front
 front_palettes = {
-    'UDF': ['#85C1E9', '#5DADE2', '#A9D0F5', '#0B5394'], # Lighter to darker blues
-    'LDF': ['#F08080', '#FF9896', '#A52A2A', '#8B0000'], # Lighter to darker reds
-    'NDA': ['#FFBB78', '#F7B731', '#FFA500', '#CC7722'], # Lighter to darker oranges/saffrons
-    'OTH': ['#A0A0A0', '#5F5F5F', '#BFBFBF']             # Lighter to darker greys
+    'UDF': ['#85C1E9', '#5DADE2', '#A9D0F5', '#0B5394'], # Blue shades
+    'LDF': ['#F08080', '#FF9896', '#A52A2A', '#8B0000'], # Red shades
+    'NDA': ['#FFBB78', '#F7B731', '#FFA500', '#CC7722'], # Orange/Saffron shades
+    'OTH': ['#A0A0A0', '#5F5F5F', '#BFBFBF']            # Grey shades
 }
 
-# 3. Build the final party-to-color map
-# This map will hold a unique color for every party that appears in the data.
+# 3. Build the final color map for all parties
 final_party_color_map = {}
-
-# Process existing parties in df_winners
-for index, row in df_winners.iterrows():
+for _, row in df_winners.iterrows():
     party = row['Party']
     front = row['Front']
 
     if party in party_specific_colors:
         final_party_color_map[party] = party_specific_colors[party]
-    elif party not in final_party_color_map: # Assign a new color if not already assigned
-        # Find the next available color from the front's palette
+    elif party not in final_party_color_map:
         if front in front_palettes:
-            assigned_count = len([p for p, c in final_party_color_map.items() if p not in party_specific_colors and df_winners[df_winners['Party'] == p]['Front'].iloc[0] == front])
             palette = front_palettes[front]
+            assigned_count = len([p for p in final_party_color_map if p not in party_specific_colors and df_winners[df_winners['Party'] == p]['Front'].iloc[0] == front])
             final_party_color_map[party] = palette[assigned_count % len(palette)]
         else:
-            final_party_color_map[party] = '#CCCCCC' # Default if Front is unknown
+            final_party_color_map[party] = '#CCCCCC' # Default grey
+
+# --- Data Aggregation for the Chart ---
+# Group by Front and Party to get the count of seats won
+df_agg = df_winners.groupby(['Front', 'Party']).size().reset_index(name='Seats Won')
 
 
-# 4. Assign colors to the DataFrame using the final_party_color_map
-df_winners['custom_color'] = df_winners['Party'].map(final_party_color_map)
+# --- Create the Altair Chart ---
 
-# Handle any parties that might not have been mapped (e.g., if a new party appears after map generation)
-df_winners['custom_color'].fillna('#CCCCCC', inplace=True)
+# Base chart layer for the bars
+base_chart = alt.Chart(df_agg).mark_bar().encode(
+    # Format axis to show whole numbers using format='d' (for integer)
+    x=alt.X('sum(Seats Won):Q',
+            title='Number of Seats Won',
+            stack='zero',
+            axis=alt.Axis(format='d')), # <-- MODIFICATION: Format axis labels as integers
 
+    # Update the Y-axis title
+    y=alt.Y('Front:N',
+            sort='-x',
+            title='Front/Party'), # <-- MODIFICATION: Changed axis title
 
-# Create the Altair chart
-# Using 'Front' on Y-axis for horizontal bars and sorting by Rank
-chart = alt.Chart(df_winners).mark_bar().encode(
-    y=alt.Y('Front:N', sort='-x', title='Front'), # Sort by Rank descending
-    x=alt.X('Rank:Q', title='Rank'),
-    
-    # Use the 'Party' column for coloring, but apply our custom color scale
-    # This correctly generates a legend based on 'Party'
-    color=alt.Color('Party:N', scale=alt.Scale(domain=list(final_party_color_map.keys()), 
-                                              range=list(final_party_color_map.values())),
-                    legend=alt.Legend(title="Party", columns=2, labelLimit=200)), # Adjust columns for better layout
-    
-    # Add tooltips for detailed info on hover
-    tooltip=['Front', 'Party', 'Rank']
-).properties(
-    title='Election Ranks by Front and Party'
+    # Color encoding by Party using the custom map
+    color=alt.Color('Party:N',
+                    scale=alt.Scale(domain=list(final_party_color_map.keys()),
+                                    range=list(final_party_color_map.values())),
+                    legend=alt.Legend(
+                        title="Party",
+                        orient='bottom',
+                        columns=3,
+                        labelLimit=200
+                    )),
+
+    # Tooltip to show details on hover
+    tooltip=[
+        alt.Tooltip('Front:N', title='Front'),
+        alt.Tooltip('Party:N', title='Party'),
+        alt.Tooltip('sum(Seats Won):Q', title='Seats Won')
+    ]
+)
+
+# Text layer for labeling the bars
+text_labels = base_chart.mark_text(
+    align='center',
+    baseline='middle',
+    color='white',
+    dx= -8 # Nudge labels slightly left for better centering
+).encode(
+    text=alt.Text('sum(Seats Won):Q', format='.0f') # Display the count of seats
+)
+
+# Combine the bar chart and the text labels
+final_chart = (base_chart + text_labels).properties(
+    title=f'Party-wise Seat Distribution by Front in {selected_lb}'
 )
 
 # Display the chart in Streamlit
-st.altair_chart(chart, use_container_width=True)
-
+st.altair_chart(final_chart, use_container_width=True)
 
 # --- UDF Performance in the Selected Local Body ---
 st.subheader(f"🔷 UDF Performance in {selected_lb}, {selected_district}")
