@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly 
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
 
 st.title("🏳️ Party-Level Analysis")
 
@@ -62,17 +62,28 @@ perf_df = pd.DataFrame({
 
 st.dataframe(perf_df, use_container_width=True, hide_index=True)
 
-# --- Doughnut Chart ---
-fig = go.Figure(data=[
-    go.Pie(
-        labels=["Won", "Not Won"],
-        values=[seats_won, seats_contested - seats_won],
-        hole=0.5,
-        marker_colors=["#87BB62", "#F89B78"]
-    )
-])
-fig.update_layout(title="🎯 Strike Rate", showlegend=True, height=300, margin=dict(t=40, b=0))
-st.plotly_chart(fig, use_container_width=True)
+
+# Data
+labels = ["Won", "Not Won"]
+sizes = [seats_won, seats_contested - seats_won]
+colors = ["#87BB62", "#F89B78"]
+
+# Create doughnut chart
+fig, ax = plt.subplots()
+wedges, texts, autotexts = ax.pie(
+    sizes,
+    labels=labels,
+    colors=colors,
+    startangle=90,
+    wedgeprops=dict(width=0.4),  # makes it a doughnut
+    autopct="%1.1f%%"
+)
+
+# Equal aspect ratio ensures that pie is drawn as a circle
+ax.axis("equal")
+st.write("Strike Rate")
+st.pyplot(fig)
+
 
 # --- Pivot Table: LBType × Rank ---
 st.subheader(f"📊 Rank-wise Performance by LBType – {selected_party} in {selected_district}")
