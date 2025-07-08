@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly 
 import plotly.graph_objects as go
 
 st.title("🏳️ Party-Level Analysis")
