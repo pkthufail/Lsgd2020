@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib as mt
+plt = mt.pyplot
 
 
 st.title("🏳️ Party-Level Analysis")
