@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
-<<<<<<< HEAD
 import plotly.graph_objects as go
-=======
 
-
->>>>>>> 5daf5df3741dd79322ddc432703e07e6e5ae1b32
+# Set page configuration
 
 st.title("🏳️ Party-Level Analysis")
 
@@ -65,8 +62,6 @@ perf_df = pd.DataFrame({
 })
 
 st.dataframe(perf_df, use_container_width=True, hide_index=True)
-
-<<<<<<< HEAD
 # --- Doughnut Chart ---
 fig = go.Figure(data=[
     go.Pie(
@@ -78,10 +73,6 @@ fig = go.Figure(data=[
 ])
 fig.update_layout(title="🎯 Strike Rate", showlegend=True, height=300, margin=dict(t=40, b=0))
 st.plotly_chart(fig, use_container_width=True)
-=======
-
-
->>>>>>> 5daf5df3741dd79322ddc432703e07e6e5ae1b32
 
 
 # --- Pivot Table: LBType × Rank ---
