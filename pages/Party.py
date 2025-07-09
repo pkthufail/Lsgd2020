@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib as mt
-plt = mt.pyplot
-
+import altair as alt
 
 st.title("🏳️ Party-Level Analysis")
 
@@ -63,28 +61,25 @@ perf_df = pd.DataFrame({
 
 st.dataframe(perf_df, use_container_width=True, hide_index=True)
 
+# --- Visualize Seats Won by Party ---
 
-# Data
-labels = ["Won", "Not Won"]
-sizes = [seats_won, seats_contested - seats_won]
-colors = ["#87BB62", "#F89B78"]
+chart_data = pd.DataFrame({
+    "Result": ["Won", "Not Won"],
+    "Seats": [seats_won, seats_contested - seats_won],
+    "Color": ["#87BB62", "#F89B78"]
+})
 
-# Create doughnut chart
-fig, ax = plt.subplots()
-wedges, texts, autotexts = ax.pie(
-    sizes,
-    labels=labels,
-    colors=colors,
-    startangle=90,
-    wedgeprops=dict(width=0.4),  # makes it a doughnut
-    autopct="%1.1f%%"
+chart = alt.Chart(chart_data).mark_bar().encode(
+    x=alt.X("Seats:Q", title="Seats"),
+    y=alt.Y("Result:N", title=""),
+    color=alt.Color("Color:N", scale=None)
+).properties(
+    width=300,
+    height=120,
+    title="Seat Distribution"
 )
 
-# Equal aspect ratio ensures that pie is drawn as a circle
-ax.axis("equal")
-st.write("Strike Rate")
-st.pyplot(fig)
-
+st.altair_chart(chart, use_container_width=True)
 
 # --- Pivot Table: LBType × Rank ---
 st.subheader(f"📊 Rank-wise Performance by LBType – {selected_party} in {selected_district}")
