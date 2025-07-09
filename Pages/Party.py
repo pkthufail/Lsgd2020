@@ -76,7 +76,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 # --- Pivot Table: LBType × Rank ---
-st.subheader(f"📊 Rank-wise Performance by LBType – {selected_party} in {selected_district}")
+st.subheader(f"📊 Count of Positions – {selected_party} in {selected_district}")
 
 pivot = pd.pivot_table(
     df_party,
@@ -114,7 +114,7 @@ if selected_party == "IUML":
     st.subheader(f"📋 IUML and Allied Party Comparison – {selected_district}")
 
     # Parties to compare
-    compare_parties = ["IUML", "SDPI", "WPI", "NSC", "INL"]
+    compare_parties = ["IUML", "SDPI", "WPI", "NSC", "INL", "PDP"]
 
     # Filter: Tier = Ward + selected district
     df_tier_ward = df[df["Tier"] == "Ward"].copy()
@@ -155,7 +155,7 @@ if selected_party == "IUML":
 if selected_party == "IUML" and selected_district == "Kerala":
     st.subheader("🌍 District-wise Performance – IUML & Allied Parties (Kerala)")
 
-    allies = ["IUML", "SDPI", "INL", "WPI", "NSC"]
+    allies = ["IUML", "SDPI", "INL", "WPI", "NSC", "PDP"]
     df_allies = df_ward[df_ward["Party"].isin(allies)]
 
     # --- Table 1: Seats Won ---

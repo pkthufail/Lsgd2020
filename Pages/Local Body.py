@@ -4,7 +4,7 @@ import math
 import altair as alt
 
 
-st.title("🏘️ Local Body-Level Insights")
+st.title("🏘️ Panchayath/Municipality/Corporation Level Insights")
 
 # Load data
 @st.cache_data
@@ -56,7 +56,7 @@ st.dataframe(front_summary, use_container_width=True, hide_index=True)
 
 
 # --- Visualize Seats Won by Front ---
-st.subheader(f"📊 Stacked Bar Chart – Party-wise Wins by Front in {selected_lb}")
+st.subheader(f"📊 Share of Parties in Winning Seats {selected_lb}")
 
 # Filter winners from the selected Local Body
 df_winners = df[
@@ -220,7 +220,6 @@ iuml_summary = (
 # Display the table
 st.dataframe(iuml_summary, use_container_width=True, hide_index=True)
 
-st.subheader(f"📋 Ward-wise Results – {selected_lb}, {selected_district}")
 
 import plotly.express as px
 
@@ -286,6 +285,8 @@ final_table = pd.DataFrame({
 # Convert Sl. Code to int for sorting (removing non-numeric artifacts)
 final_table["Sl. Code"] = final_table["Sl. Code"].astype(int)
 final_table = final_table.sort_values("Sl. Code").reset_index(drop=True)
+
+st.subheader(f"📋 Ward-wise Results – {selected_lb}, {selected_district}")
 
 # Display the table
 st.dataframe(final_table, use_container_width=True, hide_index=True)

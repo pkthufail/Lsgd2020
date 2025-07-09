@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.title("🧠 Other Party Insights")
+st.title("🧠 Other Insights")
 
 # --- Load Data ---
 @st.cache_data
@@ -52,7 +52,7 @@ age_summary["Win %"] = (age_summary["Won"] / age_summary["Contested"] * 100).rou
 age_summary["SortOrder"] = age_summary["AgeGroup40"].map({"Under 40": 0, "Over 40": 1})
 age_summary = age_summary.sort_values("SortOrder").drop(columns="SortOrder")
 
-st.subheader(f"🧾 Candidate Age Split (Under vs Over 40) – {selected_party}")
+st.subheader(f"🧾 Candidates (Under 40 vs Over 40) – {selected_party}")
 st.dataframe(age_summary, use_container_width=True, hide_index=True)
 
 # --- Pie Chart: Under 40 vs Over 40 ---
