@@ -151,3 +151,54 @@ if selected_party == "IUML":
 
     st.dataframe(compare_df, use_container_width=True, hide_index=True)
 
+# --- District-wise IUML + Allies Summary ---
+if selected_party == "IUML" and selected_district == "Kerala":
+    st.subheader("🌍 District-wise Performance – IUML & Allied Parties (Kerala)")
+
+    allies = ["IUML", "SDPI", "INL", "WPI", "NSC"]
+    df_allies = df_ward[df_ward["Party"].isin(allies)]
+
+    # --- Table 1: Seats Won ---
+    won_pivot = pd.pivot_table(
+        df_allies[df_allies["Rank"] == 1],
+        index="District",
+        columns="Party",
+        values="Candidate",
+        aggfunc="count",
+        fill_value=0
+    ).reset_index()
+
+    won_cols = ["District"] + [p for p in allies if p in won_pivot.columns]
+    won_pivot = won_pivot[won_cols]
+
+    def highlight_if_iuml_lower(row):
+        iuml = row.get("IUML", 0)
+        for party in allies:
+            if party != "IUML" and row.get(party, 0) > iuml:
+                return ["background-color: #FADBD8"] * len(row)
+        return [""] * len(row)
+
+    st.markdown("#### 🏆 Seats Won by District")
+    st.dataframe(
+        won_pivot.style.apply(highlight_if_iuml_lower, axis=1),
+        use_container_width=True
+    )
+
+    # --- Table 2: Votes Secured ---
+    vote_pivot = pd.pivot_table(
+        df_allies,
+        index="District",
+        columns="Party",
+        values="Votes",
+        aggfunc="sum",
+        fill_value=0
+    ).reset_index()
+
+    vote_cols = ["District"] + [p for p in allies if p in vote_pivot.columns]
+    vote_pivot = vote_pivot[vote_cols]
+
+    st.markdown("#### 🗳️ Votes Secured by District")
+    st.dataframe(
+        vote_pivot.style.apply(highlight_if_iuml_lower, axis=1),
+        use_container_width=True
+    )
