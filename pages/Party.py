@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
+import plotly.graph_objects as go
 
 st.title("🏳️ Party-Level Analysis")
 
@@ -61,25 +61,18 @@ perf_df = pd.DataFrame({
 
 st.dataframe(perf_df, use_container_width=True, hide_index=True)
 
-# --- Visualize Seats Won by Party ---
+# --- Doughnut Chart ---
+fig = go.Figure(data=[
+    go.Pie(
+        labels=["Won", "Not Won"],
+        values=[seats_won, seats_contested - seats_won],
+        hole=0.5,
+        marker_colors=["#87BB62", "#F89B78"]
+    )
+])
+fig.update_layout(title="🎯 Strike Rate", showlegend=True, height=300, margin=dict(t=40, b=0))
+st.plotly_chart(fig, use_container_width=True)
 
-chart_data = pd.DataFrame({
-    "Result": ["Won", "Not Won"],
-    "Seats": [seats_won, seats_contested - seats_won],
-    "Color": ["#87BB62", "#F89B78"]
-})
-
-chart = alt.Chart(chart_data).mark_bar().encode(
-    x=alt.X("Seats:Q", title="Seats"),
-    y=alt.Y("Result:N", title=""),
-    color=alt.Color("Color:N", scale=None)
-).properties(
-    width=300,
-    height=120,
-    title="Seat Distribution"
-)
-
-st.altair_chart(chart, use_container_width=True)
 
 # --- Pivot Table: LBType × Rank ---
 st.subheader(f"📊 Rank-wise Performance by LBType – {selected_party} in {selected_district}")
