@@ -231,3 +231,36 @@ fig_strength.update_layout(
 
 # Display chart
 st.plotly_chart(fig_strength, use_container_width=True)
+
+# --- Summary Table: Seats Won by Front per LB (Ward Tier only) ---
+st.subheader(f"🏘️ Seats Won by Front in Each LB – {selected_district}")
+
+# Filter for Ward tier winners in selected district
+df_lb_fronts = df[
+    (df["District"] == selected_district) &
+    (df["Tier"] == "Ward") &
+    (df["Rank"] == 1)
+]
+
+# Group by LBCode and Front to count seats
+lb_summary = (
+    df_lb_fronts.groupby(["LBCode", "LBName", "Front"])
+    .size()
+    .unstack(fill_value=0)
+    .reset_index()
+)
+
+# Ensure all major fronts exist as columns
+for front in ["UDF", "LDF", "NDA", "OTH"]:
+    if front not in lb_summary.columns:
+        lb_summary[front] = 0
+
+# Add Sl No from LBCode (first letter + last 2 digits)
+lb_summary["Sl No"] = lb_summary["LBCode"].astype(str).str[0] + lb_summary["LBCode"].astype(str).str[-2:]
+
+# Reorder columns
+columns_order = ["Sl No", "LBName", "UDF", "LDF", "NDA", "OTH"]
+lb_summary = lb_summary[columns_order].sort_values("LBName").reset_index(drop=True)
+
+# Display the table
+st.dataframe(lb_summary, use_container_width=True, hide_index=True)
