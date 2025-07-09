@@ -19,7 +19,7 @@ df = df[df["Tier"] == "Ward"]
 
 # Dropdown: Select District
 districts = sorted(df["District"].dropna().unique())
-selected_district = st.selectbox("Select a District", districts)
+selected_district = st.selectbox("Select a District", districts, index=districts.index("MALAPPURAM") if "MALAPPURAM" in districts else 0)
 
 # Dropdown: Select LBName based on selected District
 lbnames = sorted(df[df["District"] == selected_district]["LBName"].dropna().unique())
@@ -216,10 +216,43 @@ iuml_summary = (
     ], ordered=True))
 )
 
+
 # Display the table
 st.dataframe(iuml_summary, use_container_width=True, hide_index=True)
 
 st.subheader(f"📋 Ward-wise Results – {selected_lb}, {selected_district}")
+
+import plotly.express as px
+
+# Prepare mirrored chart data
+mirror_df = iuml_summary.copy()
+mirror_df["Display"] = mirror_df["Strength"].apply(
+    lambda x: -mirror_df.loc[mirror_df["Strength"] == x, "Wards_Count"].values[0] if x.startswith("-") else mirror_df.loc[mirror_df["Strength"] == x, "Wards_Count"].values[0]
+)
+mirror_df["Color"] = mirror_df["Strength"].apply(
+    lambda x: "#E74C3C" if x.startswith("-") else "#3498DB"
+)
+
+# Create mirrored bar chart
+fig_strength = px.bar(
+    mirror_df,
+    x="Strength",
+    y="Display",
+    text="Wards_Count",
+    color="Color",
+    color_discrete_map="identity",
+    title="📉 IUML Ward Count by Strength (Mirrored View)"
+)
+
+fig_strength.update_layout(
+    xaxis_title="Strength Category",
+    yaxis_title="Number of Wards",
+    showlegend=False,
+    height=500,
+    yaxis=dict(zeroline=True, zerolinecolor='black', zerolinewidth=2)
+)
+
+st.plotly_chart(fig_strength, use_container_width=True)
 
 # Filter to selected district + LB
 df_lb = df[

@@ -18,7 +18,7 @@ df["LBType"] = pd.Categorical(df["LBType"], categories=lbtype_order, ordered=Tru
 
 # Dropdown to select district
 districts = sorted(df["District"].dropna().unique())
-selected_district = st.selectbox("Select a District", districts)
+selected_district = st.selectbox("Select a District", districts, index=districts.index("MALAPPURAM"))
 
 # Filter to selected district and winners
 df_district = df[(df["District"] == selected_district) & (df["Rank"] == 1)]
@@ -60,12 +60,27 @@ pivot_table = pivot_table.loc[ordered_fronts]
 def highlight_total_col(val):
     return "font-weight: bold" if val.name == "Total" else ""
 
-styled_table = pivot_table.style.applymap(
-    lambda val: "font-weight: bold", subset=["Total"]
-)
+# Reset index so "Front" becomes a column
+pivot_table_reset = pivot_table.reset_index()
 
+# Function to color based on Front
+def front_row_style(row):
+    color_map = {
+        "UDF": "#D6EAF8",     # Light Blue
+        "LDF": "#F5B7B1",     # Light Red
+        "NDA": "#FAD7A0",     # Saffron
+        "OTH": "#D5DBDB",     # Grey
+    }
+    color = color_map.get(row["Front"], "")
+    return [f"background-color: {color}"] * len(row) if color else [""] * len(row)
+
+styled_table = pivot_table_reset.style \
+    .apply(front_row_style, axis=1) \
+    .applymap(lambda v: "font-weight: bold", subset=["Total"])
+
+# Display
 st.subheader(f"🏆 Seats Won by Front and LBType in {selected_district}")
-st.dataframe(styled_table, use_container_width=True)
+st.dataframe(styled_table, use_container_width=True, hide_index=True)
 
 # --- UDF Performance in Panchayat / Municipality / Corporation Wards ---
 st.subheader("🟦 UDF Performance in Panchayat / Municipality / Corporation Wards")
@@ -100,12 +115,11 @@ summary = pd.concat([rank_counts, contested], axis=1).fillna(0).astype(int)
 # Add Hit Rate
 summary["Hit Rate (%)"] = (summary["Won"] / summary["Contested"] * 100).round(2)
 
-# Total row (renamed to "Contested")
-summary.loc["Contested"] = summary.sum(numeric_only=True)
-summary.loc["Contested", "Hit Rate (%)"] = round(
-    (summary.loc["Contested", "Won"] / summary.loc["Contested", "Contested"]) * 100, 2
+# Add total row (index = 'Total', but column name remains 'Contested')
+summary.loc["Total"] = summary.sum(numeric_only=True)
+summary.loc["Total", "Hit Rate (%)"] = round(
+    (summary.loc["Total", "Won"] / summary.loc["Total", "Contested"]) * 100, 2
 )
-
 # Reorder columns: Won, other ranks, Contested, Hit Rate
 cols = summary.columns.tolist()
 cols_sorted = [col for col in cols if isinstance(col, int)]
@@ -127,8 +141,93 @@ ordered_index = party_order + sorted(other_parties)
 if "Contested" in summary.index:
     ordered_index.append("Contested")
 
-summary = summary.loc[ordered_index]
+# Reset index so "Party" becomes a column
+summary_reset = summary.reset_index()
+
+# Color styling function
+def party_row_style(row):
+    color_map = {
+        "IUML": "#ABEBC6",    # Light Green
+        "INC": "#AED6F1",     # Light Blue
+    }
+    color = color_map.get(row["Party"], "")
+    return [f"background-color: {color}"] * len(row) if color else [""] * len(row)
+
+styled_summary = summary_reset.style \
+    .apply(party_row_style, axis=1) \
+    .format(format_dict)
+
+st.dataframe(styled_summary, use_container_width=True, hide_index=True)
+
+# --- IUML Performance by Strength Category ---
+st.subheader("📶 IUML Performance by Strength")
+
+# Filter IUML at Ward level
+df_iuml = df[
+    (df["District"] == selected_district) &
+    (df["Party"] == "IUML") &
+    (df["Tier"] == "Ward")
+]
+
+# Count wards per strength
+strength_summary = (
+    df_iuml.groupby("Strength")
+    .agg(Wards=("WardName", "count"))
+    .reset_index()
+)
+
+# Define logical order of strength categories
+strength_order = [
+    "-500 or less", "-200 to -499", "-100 to -199", "-50 to -99", "-1 to -49",
+    "0",
+    "1-49", "50-99", "100-199", "200-499", "500+"
+]
+
+# Apply ordering
+strength_summary["Strength"] = pd.Categorical(strength_summary["Strength"], categories=strength_order, ordered=True)
+strength_summary = strength_summary.sort_values("Strength")
 
 # Display table
-st.dataframe(summary.style.format(format_dict), use_container_width=True)
+st.dataframe(strength_summary, use_container_width=True, hide_index=True)
 
+# --- Visualization: Bar Chart ---
+import plotly.express as px
+
+# Prepare mirrored bar chart
+mirror_df = strength_summary.copy()
+mirror_df["Display_Wards"] = mirror_df.apply(
+    lambda row: -row["Wards"] if str(row["Strength"]).startswith("-") else row["Wards"],
+    axis=1
+)
+
+# Assign colors
+mirror_df["Color"] = mirror_df["Strength"].apply(
+    lambda x: "#E74C3C" if str(x).startswith("-") else "#5DADE2"  # Red vs Blue
+)
+
+# Create bar chart
+fig_strength = px.bar(
+    mirror_df,
+    x="Strength",
+    y="Display_Wards",
+    text="Wards",
+    color="Color",
+    color_discrete_map="identity",  # Use custom color per bar
+    title="📶 IUML Ward Distribution by Strength Category (Mirrored View)"
+)
+
+# Update layout for symmetrical display
+fig_strength.update_layout(
+    xaxis_title="Strength Category",
+    yaxis_title="Number of Wards",
+    height=500,
+    showlegend=False,
+    yaxis=dict(
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor='black'
+    )
+)
+
+# Display chart
+st.plotly_chart(fig_strength, use_container_width=True)
