@@ -48,7 +48,7 @@ st.subheader(f"🗳️ Total Votes for {selected_party} in {selected_district}")
 st.dataframe(summary_df, use_container_width=True, hide_index=True)
 
 # --- Performance Metrics ---
-st.subheader(f"📈 Performance Metrics – {selected_party} in {selected_district}")
+st.subheader(f"📈 Strike Rate: {selected_party} in {selected_district}")
 
 seats_contested = df_party.shape[0]
 seats_won = df_party[df_party["Rank"] == 1].shape[0]
@@ -76,7 +76,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 # --- Pivot Table: LBType × Rank ---
-st.subheader(f"📊 Count of Positions – {selected_party} in {selected_district}")
+st.subheader(f"📊 Candidate Performance – {selected_party} in {selected_district}")
 
 pivot = pd.pivot_table(
     df_party,
@@ -111,7 +111,7 @@ st.dataframe(pivot, use_container_width=True, hide_index=True)
 
 # --- IUML and Related Parties Comparison Table ---
 if selected_party == "IUML":
-    st.subheader(f"📋 IUML and Allied Party Comparison – {selected_district}")
+    st.subheader(f"📋 IUML and Other Muslim Parties Comparison – {selected_district}")
 
     # Parties to compare
     compare_parties = ["IUML", "SDPI", "WPI", "NSC", "INL", "PDP"]
@@ -153,7 +153,7 @@ if selected_party == "IUML":
 
 # --- District-wise IUML + Allies Summary ---
 if selected_party == "IUML" and selected_district == "Kerala":
-    st.subheader("🌍 District-wise Performance – IUML & Allied Parties (Kerala)")
+    st.subheader("🌍 District-wise Performance – Muslim Parties")
 
     allies = ["IUML", "SDPI", "INL", "WPI", "NSC", "PDP"]
     df_allies = df_ward[df_ward["Party"].isin(allies)]

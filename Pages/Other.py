@@ -70,7 +70,7 @@ fig_pie = go.Figure(data=[
 ])
 
 fig_pie.update_layout(
-    title=f"🎂 Age Group Distribution – {selected_party}",
+    title=f"🎂 Candidate Age Group  – {selected_party}",
     height=350
 )
 

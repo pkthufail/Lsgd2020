@@ -158,7 +158,7 @@ final_chart = (base_chart + text_labels).properties(
 st.altair_chart(final_chart, use_container_width=True)
 
 # --- UDF Performance in the Selected Local Body ---
-st.subheader(f"🔷 UDF Performance in {selected_lb}, {selected_district}")
+st.subheader(f"🔷 UDF Candidate Performance in {selected_lb}, {selected_district}")
 
 # Filter UDF candidates in selected Local Body
 df_udf = df[
@@ -193,7 +193,7 @@ st.dataframe(udf_pivot, use_container_width=True, hide_index=True)
 
 
 # --- IUML Performance by Strength ---
-st.subheader(f"🟢 IUML Performance by Strength in {selected_lb}, {selected_district}")
+st.subheader(f"🟢 IUML Strong & Weak Wards in {selected_lb}, {selected_district}")
 
 # Filter for IUML in selected LB
 df_iuml = df[
@@ -222,35 +222,51 @@ st.dataframe(iuml_summary, use_container_width=True, hide_index=True)
 
 
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Prepare mirrored chart data
 mirror_df = iuml_summary.copy()
 mirror_df["Display"] = mirror_df["Strength"].apply(
     lambda x: -mirror_df.loc[mirror_df["Strength"] == x, "Wards_Count"].values[0] if x.startswith("-") else mirror_df.loc[mirror_df["Strength"] == x, "Wards_Count"].values[0]
 )
-mirror_df["Color"] = mirror_df["Strength"].apply(
-    lambda x: "#E74C3C" if x.startswith("-") else "#3498DB"
-)
 
-# Create mirrored bar chart
+# Assign status and color
+mirror_df["Status"] = mirror_df["Strength"].apply(lambda x: "Lost" if x.startswith("-") else "Won")
+mirror_df["Color"] = mirror_df["Status"].map({"Won": "#6c80ac", "Lost": "#cc807c"})
+
+# Create bar chart
 fig_strength = px.bar(
     mirror_df,
-    x="Strength",
-    y="Display",
+    y="Strength",
+    x="Display",
     text="Wards_Count",
-    color="Color",
-    color_discrete_map="identity",
-    title="📉 IUML Ward Count by Strength (Mirrored View)"
+    color="Status",
+    color_discrete_map={"Won": "#6c80ac", "Lost": "#cc807c"},
+    title="📉 IUML Ward Count by Strength",
+    orientation='h'
 )
 
+# Update layout: vertical chart, custom axis, legend bottom-right
 fig_strength.update_layout(
-    xaxis_title="Strength Category",
-    yaxis_title="Number of Wards",
-    showlegend=False,
-    height=500,
-    yaxis=dict(zeroline=True, zerolinecolor='black', zerolinewidth=2)
+    xaxis_title="Number of Wards",
+    yaxis_title="Strength Category",
+    height=600,
+    legend=dict(
+        title="Status",
+        orientation="h",
+        x=1.0,
+        y=0,
+        xanchor="right",
+        yanchor="bottom"
+    ),
+    xaxis=dict(
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor='black'
+    )
 )
 
+# Display in Streamlit
 st.plotly_chart(fig_strength, use_container_width=True)
 
 # Filter to selected district + LB
