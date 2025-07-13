@@ -79,11 +79,12 @@ styled_table = pivot_table_reset.style \
     .applymap(lambda v: "font-weight: bold", subset=["Total"])
 
 # Display
-st.subheader(f"🏆 Seats Won by Front and LBType in {selected_district}")
+st.subheader(f"🏆 Seats Won by Front in {selected_district}")
 st.dataframe(styled_table, use_container_width=True, hide_index=True)
 
 # --- UDF Performance in Panchayat / Municipality / Corporation Wards ---
-st.subheader("🟦 UDF Performance in Panchayat / Municipality / Corporation Wards")
+st.subheader("🟦 UDF Candidate Performance")
+st.write("*Only Panchayat, Municipality, and Corporation Wards*")
 
 # Filter data: UDF candidates in Ward-tier, selected district
 df_udf = df[
@@ -160,7 +161,7 @@ styled_summary = summary_reset.style \
 st.dataframe(styled_summary, use_container_width=True, hide_index=True)
 
 # --- IUML Performance by Strength Category ---
-st.subheader("📶 IUML Performance by Strength")
+st.subheader("📶 IUML - Number of Strong and Weak Wards")
 
 # Filter IUML at Ward level
 df_iuml = df[
@@ -188,9 +189,8 @@ strength_summary["Strength"] = pd.Categorical(strength_summary["Strength"], cate
 strength_summary = strength_summary.sort_values("Strength")
 
 # Display table
-st.dataframe(strength_summary, use_container_width=True, hide_index=True)
+#st.dataframe(strength_summary, use_container_width=True, hide_index=True)
 
-# --- Visualization: Bar Chart ---
 import plotly.express as px
 
 # Prepare mirrored bar chart
@@ -200,32 +200,43 @@ mirror_df["Display_Wards"] = mirror_df.apply(
     axis=1
 )
 
-# Assign colors
-mirror_df["Color"] = mirror_df["Strength"].apply(
-    lambda x: "#E74C3C" if str(x).startswith("-") else "#5DADE2"  # Red vs Blue
+# Create a new column for legend labeling
+mirror_df["Status"] = mirror_df["Strength"].apply(
+    lambda x: "Lost" if str(x).startswith("-") else "Won"
 )
 
-# Create bar chart
+# Create vertical mirrored bar chart
 fig_strength = px.bar(
     mirror_df,
-    x="Strength",
-    y="Display_Wards",
+    x="Display_Wards",
+    y="Strength",
+    orientation='h',
     text="Wards",
-    color="Color",
-    color_discrete_map="identity",  # Use custom color per bar
-    title="📶 IUML Ward Distribution by Strength Category (Mirrored View)"
+    color="Status",  # This enables the legend
+    color_discrete_map={
+        "Lost": "#cc807c",  # red shade
+        "Won": "#6c80ac"    # blue shade
+    },
+    title=""
 )
 
-# Update layout for symmetrical display
+# Update layout
 fig_strength.update_layout(
-    xaxis_title="Strength Category",
-    yaxis_title="Number of Wards",
-    height=500,
-    showlegend=False,
-    yaxis=dict(
+    xaxis_title="Number of Wards",
+    yaxis_title="Strength Category",
+    height=600,
+    xaxis=dict(
         zeroline=True,
         zerolinewidth=2,
         zerolinecolor='black'
+    ),
+    legend=dict(
+        title="Status",
+        orientation="h",
+        x=1.0,
+        y=0,
+        xanchor="right",
+        yanchor="bottom"
     )
 )
 
@@ -233,7 +244,7 @@ fig_strength.update_layout(
 st.plotly_chart(fig_strength, use_container_width=True)
 
 # --- Summary Table: Seats Won by Front per LB (Ward Tier only) ---
-st.subheader(f"🏘️ Seats Won by Front in Each LB – {selected_district}")
+st.subheader(f"🏘️ Fornt Wise Seats Won in Local Body – {selected_district}")
 
 # Filter for Ward tier winners in selected district
 df_lb_fronts = df[
